@@ -1,0 +1,370 @@
+openapi: 3.0.3
+info:
+  title: TMF622 Ordering API Subset
+  version: 1.0.0
+  description: Self-contained TMF622-aligned subset used to generate order models for the sample.
+servers:
+  - url: https://serverRoot/nttdata/vds/productOrderingManagement/v1
+tags:
+  - name: productOrder
+    description: operations with ProductOrder entities
+paths:
+  /productOrders:
+    get:
+      tags:
+        - productOrder
+      summary: View a list of orders
+      description: This operation lists ProductOrder entities, as a result of the productOrders/search operation
+      operationId: listProductOrder
+      parameters:
+        - name: limit
+          in: query
+          description: Maximum number or returned orders
+          schema:
+            type: integer
+        - name: offset
+          in: query
+          description: Offset
+          schema:
+            type: integer
+        - name: sort
+          in: query
+          description: Comma-separated list of fields to define the sort order. To indicate sorting direction, 
+            fields can be prefixed with + (ascending) or - (descending), e.g. /orders?sort=+id
+          required: false
+          schema:
+            default: id
+            type: string
+            pattern: '^[\w][\w,]*[\w]$'
+        - name: searchId          
+          in: query
+          description: The id of a search Query for which the result should be returned.
+          required: true
+          schema:
+            type: string
+            pattern: '^[\w\-]*$'
+            maxLength: 50
+            minLength: 1
+        
+        - name: fields
+          in: query
+          style: form
+          explode: false
+          description: Reduce orders to exact fields
+          schema:
+            type: array
+            items:
+              type: string
+      responses:
+        '200':
+          description: Success
+          headers:
+            X-Total-Count:
+              description: Total number of items matching criteria
+              schema:
+                type: integer
+            X-Result-Count:
+              description: Actual number of items returned in the response body
+              schema:
+                type: integer
+          content:
+            application/json:
+              schema:
+                properties:
+                  items:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/ProductOrder'
+                  paging:
+                    $ref: '#/components/schemas/Paging'                 
+        '400':
+          description: Bad Request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '403':
+          description: Forbidden
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '409':
+          description: Conflict
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '415':
+          description: Unsupported Media Type
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          description: Internal Server Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+    post:
+      tags:
+        - productOrder
+      summary: Creates a ProductOrder
+      description: This operation creates a ProductOrder entity, and starts processing it.
+      operationId: createProductOrder
+      requestBody:
+        description: The ProductOrder to be created
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ProductOrder'
+        required: true
+      parameters:
+        - name: meshUiSystem
+          in: query
+          required: false
+          description: >-
+            If true, enters special processing mode for mesh-ui. Usually results
+            in different mapping by the target system adapter.
+          schema:
+            type: string
+        - name: asynchronous
+          in: query
+          required: false
+          description: >-
+            If true, switch to asynchronous processing, leading that after some short checks a 202 is returned.
+            Default: false
+          schema:
+            type: boolean
+
+      responses:
+        '201':
+          description: Created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProductOrder'
+        '202':
+          description: Accepted
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProductOrder'
+        '400':
+          description: Bad Request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '403':
+          description: Forbidden
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '409':
+          description: Conflict
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '415':
+          description: Unsupported Media Type
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          description: Internal Server Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+      x-codegen-request-body-name: productOrder
+components:
+  schemas:
+    ProductOrderCreate:
+      type: object
+      required:
+        - id
+        - externalId
+        - category
+        - orderItem
+      properties:
+        id:
+          type: string
+        externalId:
+          type: string
+        category:
+          type: string
+        description:
+          type: string
+        orderItem:
+          type: array
+          items:
+            $ref: '#/components/schemas/ProductOrderItem'
+    ProductOrder:
+      allOf:
+        - $ref: '#/components/schemas/ProductOrderCreate'
+        - type: object
+          properties:
+            id:
+              type: string
+            state:
+              type: string
+    ProductOrderItem:
+      type: object
+      required:
+        - id
+        - action
+        - quantity
+        - productOffering
+      properties:
+        id:
+          type: string
+        action:
+          type: string
+        quantity:
+          type: integer
+          format: int32
+        productOffering:
+          $ref: '#/components/schemas/ProductOfferingRef'
+    ProductOfferingRef:
+      type: object
+      required:
+        - id
+        - name
+      properties:
+        id:
+          type: string
+        name:
+          type: string
+        href:
+          type: string
+    SearchOrderCriteria:
+      type: object
+      properties:
+        limit:
+          type: integer
+          description: Maximum number or returned orders
+          default: 10
+        offset:
+          type: integer
+          description: Offset
+        id:
+          type: string
+          description: The unique identifier for this SearchOrderCriteria
+          readOnly: true
+        state:
+          allOf:
+            - $ref: '#/components/schemas/SearchOrderCriteriaState'
+          readOnly: true
+        showAllVersions:
+          type: boolean
+          description: "If true, show all order versions. Default: false"        
+    SearchOrderCriteriaState:
+      description: <+
+        The state of a SearchOrder query
+      type: string
+      x-extensible-enum:
+        - accepted
+        - rejected
+        - pending
+        - running
+        - completed
+        - failed
+    Paging:
+      description: "Pagination information"
+      required:
+        - total
+        - page
+        - last_page
+      type: "object"
+      properties:
+        total:
+          description: "The data field contains Technical-Data."
+          type: "integer"
+          example: 10
+        page:
+          description: "The data field contains Technical-Data."
+          type: "integer"
+          example: 1
+        last_page:
+          description: "The data field contains Technical-Data."
+          type: "integer"
+          example: 10
+    Error:
+      required:
+        - code
+        - reason
+      type: object
+      properties:
+        businessMessage:
+          type: string
+          description: A business error message, which is language and client specific. If present, this should be displayed to the user.
+        code:
+          type: string
+          description: Application relevant detail, defined in the API or a common list.
+        reason:
+          type: string
+          description: >-
+            Explanation of the reason for the error which can be shown to a
+            client user.
+        message:
+          type: string
+          description: >-
+            More details and corrective actions related to the error which can
+            be shown to a client user.
+        status:
+          type: string
+          description: HTTP Error code extension
+        referenceError:
+          type: string
+          description: URI of documentation describing the error.
+          format: uri
+        remoteRequestName:
+          type: string
+          description: The name of the remote request.
+          maxLength: 256
+          pattern: '^[^\p{Cf}\p{Cn}\p{Zl}\p{Zp}]*$'
+          nullable: true
+        remoteRequest:
+          type: string
+          description: The request sent to the remote system
+        remoteResponse:
+          type: string
+          description: The response received from the remote system
+        '@baseType':
+          type: string
+          description: When sub-classing, this defines the super-class.
+          maxLength: 50
+          pattern: '^[\w\-]*[a-zA-Z\d]$'
+          nullable: true
+        '@schemaLocation':
+          type: string
+          description: >-
+            A URI to a JSON-Schema file that defines additional attributes and
+            relationships
+          format: uri
+        '@type':
+          type: string
+          description: When sub-classing, this defines the sub-class entity name.
+          maxLength: 50
+          pattern: '^[\w\-]*[a-zA-Z\d]$'
+          nullable: true
+      description: >-
+        Used when an API throws an Error, typically with a HTTP error
+        response-code (3xx, 4xx, 5xx)
