@@ -19,17 +19,27 @@ import org.eclipse.microprofile.rest.client.inject.RestClient;
 @Produces(MediaType.APPLICATION_JSON)
 public class OrderResource {
 
-    @Inject
-    ProductOrderMapper productOrderMapper;
+  @Inject
+  ProductOrderMapper productOrderMapper;
 
-    @Inject
-    @RestClient
-    OrchestrationClient orchestrationClient;
+  @Inject
+  @RestClient
+  OrchestrationClient orchestrationClient;
 
-    @POST
-    public Response createOrder(ProductOrderCreate request) {
-        InternalOrderRequest internalRequest = productOrderMapper.toInternal(request);
-        InternalOrderResponse response = orchestrationClient.submit(internalRequest);
-        return Response.accepted(response).build();
+  @POST
+  public Response createOrder(ProductOrderCreate request) {
+    try {
+      if (request == null) {
+        return Response.status(Response.Status.BAD_REQUEST).build();
+      }
+      InternalOrderRequest internalRequest = productOrderMapper.toInternal(request);
+      InternalOrderResponse response = orchestrationClient.submit(internalRequest);
+
+      return Response.accepted(response).build();
+    } catch (Exception e) {
+      return Response.status(Response.Status.INTERNAL_SERVER_ERROR)
+          .entity("Failed to process order: " + e.getMessage())
+          .build();
     }
+  }
 }
