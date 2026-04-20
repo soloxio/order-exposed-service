@@ -1,0 +1,40 @@
+.mvn/repository/
+/target/
+/out/
+generated-sources/
+generated-test-sources/
+
+# IntelliJ
+.idea/
+*.iml
+
+# Eclipse
+.classpath
+.project
+.settings/
+
+# VS Code
+.vscode/
+
+# Logs
+*.log
+
+# Compiled class files and archives
+*.class
+*.jar
+*.war
+*.ear
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Temporary files
+*~
+*.swp
+
+# Node
+node_modules/
+
+# Environment
+.env
