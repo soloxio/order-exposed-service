@@ -65,7 +65,12 @@ public class OrderResource {
       List<ProductOrder> productOrders = orchestrationClient.search(internalOrderSearchDTO);
       return Response.ok(productOrders).build();
     } catch (Exception e) {
-      throw new RuntimeException(e);
+      if (e instanceof IllegalArgumentException) {
+        return Response.status(Response.Status.BAD_REQUEST)
+            .entity("Invalid search parameters: " + e.getMessage())
+            .build();
+      }
+      return Response.status(Response.Status.INTERNAL_SERVER_ERROR).entity("Search Order failed due to exception: " + e.getMessage()).build();
     }
   }
 }
